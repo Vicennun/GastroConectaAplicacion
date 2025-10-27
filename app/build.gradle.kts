@@ -64,4 +64,5 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(libs.gson)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.coil.compose)
 }

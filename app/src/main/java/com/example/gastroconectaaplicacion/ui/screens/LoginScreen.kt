@@ -99,14 +99,13 @@ fun LoginScreen(navController: NavController) {
                 )
             }
             AuthUiState.Success -> {
-                // Si el login es exitoso, navega a la pantalla Home (que aún no existe)
-                // ¡IMPORTANTE! Comenta esta línea por ahora
-                // LaunchedEffect(Unit) {
-                //    navController.navigate(AppScreens.HomeScreen.route) {
-                //        popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
-                //    }
-                //    viewModel.resetState()
-                //}
+                // Si el login es exitoso, navega a la pantalla Home
+                LaunchedEffect(Unit) { // <-- DESCOMENTADO
+                    navController.navigate(AppScreens.HomeScreen.route) {
+                        popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
+                    }
+                    viewModel.resetState()
+                } // <-- DESCOMENTADO
             }
             else -> {} // No hacer nada en Idle o Loading
         }

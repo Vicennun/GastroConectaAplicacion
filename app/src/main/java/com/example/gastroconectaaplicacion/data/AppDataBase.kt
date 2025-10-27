@@ -29,7 +29,7 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(context: Context): AppDatabase {
             // Si INSTANCE no es nulo, la retorna.
             // Si es nulo, crea la base de datos de forma segura.
-            return com.example.gastroconectaaplicacion.di.AppDatabase.Companion.INSTANCE ?: synchronized(this) {
+            return INSTANCE ?: synchronized(this) { // ¡CORREGIDO!
                 val instance = Room.databaseBuilder(
                     context.applicationContext,
                     AppDatabase::class.java,
@@ -37,7 +37,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // .fallbackToDestructiveMigration() // Útil en desarrollo si cambias las tablas
                     .build()
-                com.example.gastroconectaaplicacion.di.AppDatabase.Companion.INSTANCE = instance
+                INSTANCE = instance // ¡CORREGIDO!
                 // Retorna la instancia
                 instance
             }

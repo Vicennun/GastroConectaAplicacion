@@ -123,13 +123,13 @@ fun RegisterScreen(navController: NavController) {
                 )
             }
             AuthUiState.Success -> {
-                // Éxito implica auto-login, navegamos a Home (comentado por ahora)
-                LaunchedEffect(Unit) {
-                    // navController.navigate("home_screen") { // Cambia "home_screen" por la ruta real cuando la definas
-                    //     popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
-                    // }
+                // Éxito implica auto-login, navegamos a Home
+                LaunchedEffect(Unit) { // <-- DESCOMENTADO
+                    navController.navigate(AppScreens.HomeScreen.route) { // Agrega navegación correcta a Home
+                        popUpTo(AppScreens.LoginScreen.route) { inclusive = true }
+                    }
                     viewModel.resetState()
-                }
+                } // <-- DESCOMENTADO
             }
             else -> {}
         }

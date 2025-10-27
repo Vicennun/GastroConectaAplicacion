@@ -11,14 +11,14 @@ import androidx.compose.ui.Modifier
 // 1. Importa tu navegación
 import com.example.gastroconectaaplicacion.ui.navigation.AppNavigation
 // 2. Importa tu tema (este archivo ya existía)
-import com.example.gastroconectaapp.ui.theme.GastroConectaAppTheme
+import com.example.gastroconectaaplicacion.ui.theme.GastroConectaAplicacionTheme // CORREGIDO
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             // 3. Carga tu tema
-            GastroConectaAppTheme {
+            GastroConectaAplicacionTheme { // CORREGIDO
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
