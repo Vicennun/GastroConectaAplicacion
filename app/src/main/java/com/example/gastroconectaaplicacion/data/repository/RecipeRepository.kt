@@ -3,7 +3,7 @@ package com.example.gastroconectaaplicacion.data.repository // Verifica
 import com.example.gastroconectaaplicacion.data.dao.RecipeDao
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.firstOrNull
+import kotlinx.coroutines.flow.first
 
 class RecipeRepository(private val recipeDao: RecipeDao) {
 
@@ -24,8 +24,8 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
     // --- NUEVA FUNCIÓN ---
     // Añade/Quita like de un usuario a una receta
     suspend fun toggleLikeRecipe(userId: Long, recipeId: Long) {
-        val recipeFlow = recipeDao.getRecipeById(recipeId) // Obtén el Flow
-        val recipe = kotlinx.coroutines.flow.firstOrNull(recipeFlow) ?: return // Obtén el valor actual del Flow
+        val recipeFlow = recipeDao.getRecipeById(recipeId)
+        val recipe = recipeFlow.first() ?: return
 
         val updatedLikes = if (recipe.likes.contains(userId)) {
             recipe.likes - userId // Quita el like
