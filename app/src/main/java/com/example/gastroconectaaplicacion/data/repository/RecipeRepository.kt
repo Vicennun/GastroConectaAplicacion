@@ -1,14 +1,12 @@
-package com.example.gastroconectaaplicacion.data.repository
+package com.example.gastroconectaaplicacion.data.repository // Verifica
 
 import com.example.gastroconectaaplicacion.data.dao.RecipeDao
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.firstOrNull
 
-// 1. Pedimos el DAO en el constructor
 class RecipeRepository(private val recipeDao: RecipeDao) {
 
-    // 2. Exponemos los 'Flows' del DAO directamente.
-    // Compose se conectará a estos para recibir actualizaciones en vivo.
     val allRecipes: Flow<List<Recipe>> = recipeDao.getAllRecipes()
 
     fun getRecipeById(id: Long): Flow<Recipe?> {
@@ -19,9 +17,21 @@ class RecipeRepository(private val recipeDao: RecipeDao) {
         return recipeDao.getRecipesByAuthor(autorId)
     }
 
-    // 3. Las funciones 'suspend' simplemente llaman al DAO.
-    // El ViewModel llamará a esta función cuando se cree una receta.
     suspend fun insertRecipe(recipe: Recipe) {
         recipeDao.insertRecipe(recipe)
+    }
+
+    // --- NUEVA FUNCIÓN ---
+    // Añade/Quita like de un usuario a una receta
+    suspend fun toggleLikeRecipe(userId: Long, recipeId: Long) {
+        val recipeFlow = recipeDao.getRecipeById(recipeId) // Obtén el Flow
+        val recipe = kotlinx.coroutines.flow.firstOrNull(recipeFlow) ?: return // Obtén el valor actual del Flow
+
+        val updatedLikes = if (recipe.likes.contains(userId)) {
+            recipe.likes - userId // Quita el like
+        } else {
+            recipe.likes + userId // Añade el like
+        }
+        recipeDao.updateRecipe(recipe.copy(likes = updatedLikes))
     }
 }

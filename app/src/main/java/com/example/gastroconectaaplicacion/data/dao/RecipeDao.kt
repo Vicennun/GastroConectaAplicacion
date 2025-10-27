@@ -1,8 +1,6 @@
-package com.example.gastroconectaaplicacion.data.dao
+package com.example.gastroconectaaplicacion.data.dao // Verifica
 
-import androidx.room.Dao
-import androidx.room.Insert
-import androidx.room.Query
+import androidx.room.* // Importa todo de Room
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import kotlinx.coroutines.flow.Flow
 
@@ -12,16 +10,16 @@ interface RecipeDao {
     @Insert
     suspend fun insertRecipe(recipe: Recipe)
 
-    // Usamos Flow para que la UI se actualice automáticamente
-    // cuando haya un cambio en la tabla de recetas (Reactividad).
     @Query("SELECT * FROM recipes ORDER BY id DESC")
-    fun getAllRecipes(): Flow<List<Recipe>> // Flow es un flujo de datos
+    fun getAllRecipes(): Flow<List<Recipe>>
 
     @Query("SELECT * FROM recipes WHERE id = :id LIMIT 1")
-    fun getRecipeById(id: Long): Flow<Recipe?>
+    fun getRecipeById(id: Long): Flow<Recipe?> // Ya la tenías, asegúrate que devuelve Flow
 
     @Query("SELECT * FROM recipes WHERE autorId = :autorId ORDER BY id DESC")
     fun getRecipesByAuthor(autorId: Long): Flow<List<Recipe>>
 
-    // Podríamos añadir funciones de Update y Delete aquí en el futuro
+    // --- NUEVA FUNCIÓN ---
+    @Update
+    suspend fun updateRecipe(recipe: Recipe) // Para guardar cambios (likes)
 }

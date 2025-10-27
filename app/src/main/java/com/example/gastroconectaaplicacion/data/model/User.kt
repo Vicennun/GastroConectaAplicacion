@@ -1,15 +1,20 @@
-package com.example.gastroconectaaplicacion.data.model
+package com.example.gastroconectaaplicacion.data.model // Verifica
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters // Añade este import
 
-@Entity(tableName = "users") // Así se llamará la tabla en la base de datos
+@Entity(tableName = "users")
+@TypeConverters(Converters::class) // <-- ¡AÑADE ESTO! Le dice a Room que use los conversores
 data class User(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0, // Room se encargará de generar el ID
+    val id: Long = 0,
     val nombre: String,
     val email: String,
-    val password_hash: String // ¡Importante! Nunca guardes contraseñas en texto plano
-    // Faltan campos como "recetario", "siguiendo", "seguidores".
-    // Los añadiremos después cuando veamos las "Relaciones"
+    val password_hash: String,
+
+    // --- NUEVOS CAMPOS ---
+    val recetario: List<Long> = emptyList(), // Lista de IDs de recetas guardadas
+    val siguiendo: List<Long> = emptyList(), // Lista de IDs de usuarios que sigue
+    val seguidores: List<Long> = emptyList() // Lista de IDs de usuarios que le siguen
 )

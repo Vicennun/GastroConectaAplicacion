@@ -1,30 +1,63 @@
-package com.example.gastroconectaaplicacion.data.repository
+package com.example.gastroconectaaplicacion.data.repository // Verifica
 
 import com.example.gastroconectaaplicacion.data.dao.UserDao
 import com.example.gastroconectaaplicacion.data.model.User
 
-// 1. Pedimos el DAO en el constructor
 class UserRepository(private val userDao: UserDao) {
 
-    // 2. Función para registrar
     suspend fun registerUser(user: User) {
-        // (Aquí en el futuro iría la lógica para "hashear" la contraseña)
         userDao.insertUser(user)
     }
 
-    // 3. Función para login
-    // Compara el email y la contraseña (aún no hasheada, igual que en tu app React)
     suspend fun loginUser(email: String, password: String): User? {
         val user = userDao.getUserByEmail(email)
-
-        // Comprobamos si el usuario existe Y si la contraseña coincide
+        // Simplificado: Compara hash directamente (deberías usar una librería de hashing)
         if (user != null && user.password_hash == password) {
             return user
         }
-        return null // Si no coincide, retorna nulo
+        return null
     }
 
     suspend fun getUserById(id: Long): User? {
         return userDao.getUserById(id)
+    }
+
+    // --- NUEVAS FUNCIONES ---
+
+    // Guarda/Quita receta del recetario del usuario
+    suspend fun toggleSaveRecipe(userId: Long, recipeId: Long) {
+        val user = userDao.getUserById(userId) ?: return // Sal si el usuario no existe
+        val updatedRecetario = if (user.recetario.contains(recipeId)) {
+            user.recetario - recipeId // Quita el ID
+        } else {
+            user.recetario + recipeId // Añade el ID
+        }
+        userDao.updateUser(user.copy(recetario = updatedRecetario))
+    }
+
+    // Sigue/Deja de seguir a otro usuario
+    suspend fun toggleFollowUser(currentUserId: Long, targetUserId: Long) {
+        if (currentUserId == targetUserId) return // No te puedes seguir a ti mismo
+
+        val currentUser = userDao.getUserById(currentUserId) ?: return
+        val targetUser = userDao.getUserById(targetUserId) ?: return
+
+        val isFollowing = currentUser.siguiendo.contains(targetUserId)
+
+        // Actualiza lista 'siguiendo' del usuario actual
+        val updatedFollowing = if (isFollowing) {
+            currentUser.siguiendo - targetUserId
+        } else {
+            currentUser.siguiendo + targetUserId
+        }
+        userDao.updateUser(currentUser.copy(siguiendo = updatedFollowing))
+
+        // Actualiza lista 'seguidores' del usuario objetivo
+        val updatedFollowers = if (isFollowing) {
+            targetUser.seguidores - currentUserId
+        } else {
+            targetUser.seguidores + currentUserId
+        }
+        userDao.updateUser(targetUser.copy(seguidores = updatedFollowers))
     }
 }
