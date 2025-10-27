@@ -10,6 +10,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.gastroconectaaplicacion.ui.navigation.AppScreens // Verifica
 import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel // Verifica
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica
 
@@ -22,45 +23,49 @@ fun ProfileScreen(navController: NavController) {
 
     val currentUser by authViewModel.currentUser.collectAsState()
 
-    // Necesitaríamos RecipeViewModel para mostrar "Mis Recetas" y "Guardadas"
-    // val recipeViewModel: RecipeViewModel = viewModel(factory = factory)
-    // val recipes by recipeViewModel.allRecipes.collectAsState()
-    // val misRecetas = recipes.filter { it.autorId == currentUser?.id }
-    // val recetasGuardadas = ... (necesitaríamos el campo 'recetario' en User)
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    // Comprobar si el usuario está logueado, si no, redirigir (mejorado)
+    LaunchedEffect(currentUser) {
         if (currentUser == null) {
-            Text("No estás logueado.") // O redirigir a Login
-        } else {
+            navController.navigate(AppScreens.LoginScreen.route) {
+                popUpTo(0) { inclusive = true } // Limpia toda la pila para que no pueda volver atrás
+            }
+        }
+    }
+
+    // Solo muestra el contenido si currentUser no es null
+    currentUser?.let { user ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             Text("Mi Perfil", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Nombre: ${currentUser?.nombre}")
-            Text("Email: ${currentUser?.email}")
+            Text("Nombre: ${user.nombre}")
+            Text("Email: ${user.email}")
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Aquí irían las Tabs (Mis Recetas, Guardadas, Siguiendo, Seguidores)
-            // Implementar Tabs en Compose requiere más código (TabRow, Pager, etc.)
+            // TODO: Implementar Tabs con Pager (Compose) para:
+            // - Mis Recetas (filtrar recipes por user.id)
+            // - Recetas Guardadas (filtrar recipes por user.recetario)
+            // - Siguiendo (buscar usuarios por user.siguiendo)
+            // - Seguidores (buscar usuarios por user.seguidores)
             Text("--- Pestañas Pendientes ---")
-            Text("Mis Recetas: (Pendiente)")
-            Text("Recetas Guardadas: (Pendiente)")
-            Text("Siguiendo: (Pendiente)")
-            Text("Seguidores: (Pendiente)")
-
-            // Botón Logout (provisional)
             Spacer(modifier = Modifier.height(32.dp))
+
+            // Botón Logout Funcional
             Button(onClick = {
-                // authViewModel.logout() // Necesitarías implementar logout en ViewModel
-                navController.navigate("login_screen") { // Volver a login (simplificado)
-                    popUpTo(0) // Limpia toda la pila
-                }
+                authViewModel.logout()
+                // Navegar a Login ya se maneja con LaunchedEffect
             }) {
-                Text("Cerrar Sesión (Temporal)")
+                Text("Cerrar Sesión")
             }
+        }
+    } ?: run {
+        // Muestra carga mientras LaunchedEffect redirige (o si hubo error)
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator()
         }
     }
 }

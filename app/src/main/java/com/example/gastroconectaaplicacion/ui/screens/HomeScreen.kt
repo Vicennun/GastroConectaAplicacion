@@ -1,49 +1,65 @@
-package com.example.gastroconectaaplicacion.ui.screens // Verifica este paquete
+package com.example.gastroconectaaplicacion.ui.screens // Verifica
 
 import android.app.Application
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel // Verifica este import
-import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica este import
+import com.example.gastroconectaaplicacion.ui.components.RecipeCard // <-- IMPORTA TU CARD
+import com.example.gastroconectaaplicacion.ui.navigation.AppScreens // Verifica
+import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel // Verifica
+import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica
 
+@OptIn(ExperimentalMaterial3Api::class) // Para Scaffold y FAB
 @Composable
 fun HomeScreen(navController: NavController) {
-    // Obtener ViewModel
     val context = LocalContext.current
     val application = context.applicationContext as Application
     val viewModel: RecipeViewModel = viewModel(factory = ViewModelFactory(application))
 
-    // Observar la lista de recetas
     val recipes by viewModel.allRecipes.collectAsState()
 
-    Box(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        if (recipes.isEmpty()) {
-            // Muestra indicador de carga o texto si no hay recetas
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-            // Text("No hay recetas disponibles.", modifier = Modifier.align(Alignment.Center))
-        } else {
-            // Muestra la lista de recetas (muy básico)
-            LazyColumn {
-                items(recipes) { recipe ->
-                    Text("Receta: ${recipe.titulo}") // Aquí iría tu RecipeCard Composable
-                    // Divider() // Para separar items
-                }
+    Scaffold(
+        topBar = {
+            TopAppBar(title = { Text("GastroConecta") })
+            // Aquí podrías añadir icono de búsqueda/filtros
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate(AppScreens.CreateRecipeScreen.route) }) {
+                Icon(Icons.Filled.Add, contentDescription = "Crear Receta")
             }
         }
-        // Aquí podrías añadir botones flotantes, filtros, etc.
+    ) { paddingValues -> // paddingValues contiene el padding necesario por TopAppBar/FAB
+
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(horizontal = 16.dp)) { // Aplica padding
+            if (recipes.isEmpty()) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp) // Espacio entre cards
+                ) {
+                    items(recipes, key = { it.id }) { recipe -> // Usa ID como key para eficiencia
+                        RecipeCard(
+                            recipe = recipe,
+                            onClick = {
+                                // Navega al detalle pasando el ID
+                                navController.navigate(AppScreens.RecipeDetailScreen.createRoute(recipe.id))
+                            }
+                        )
+                    }
+                }
+            }
+            // Aquí irían los filtros si los implementas
+        }
     }
 }

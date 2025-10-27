@@ -1,15 +1,14 @@
-package com.example.gastroconectaaplicacion.ui.viewmodel // Verifica paquete
+package com.example.gastroconectaaplicacion.ui.viewmodel // Verifica
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.gastroconectaaplicacion.data.model.Recipe // Verifica import
-import com.example.gastroconectaaplicacion.data.repository.RecipeRepository // Verifica import
-import kotlinx.coroutines.flow.* // Necesitas importar Flow
+import com.example.gastroconectaaplicacion.data.model.Recipe
+import com.example.gastroconectaaplicacion.data.repository.RecipeRepository
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewModel() {
 
-    // Flujo de todas las recetas
     val allRecipes: StateFlow<List<Recipe>> = recipeRepository.allRecipes
         .stateIn(
             scope = viewModelScope,
@@ -17,29 +16,24 @@ class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewMode
             initialValue = emptyList()
         )
 
-    // --- AÑADE ESTA FUNCIÓN ---
-    // Función para obtener una receta específica por ID como Flow
-    // La UI observará este Flow para obtener la receta
     fun getRecipeById(id: Long): Flow<Recipe?> {
         return recipeRepository.getRecipeById(id)
     }
-    // --- --- --- --- --- ---
 
-    // Función básica para añadir receta
     fun addRecipe(recipe: Recipe) {
         viewModelScope.launch {
-            try {
-                recipeRepository.insertRecipe(recipe)
-                // TODO: Añadir manejo de estado de UI (éxito/error)
-            } catch (e: Exception) {
-                // TODO: Añadir manejo de estado de UI (éxito/error)
-            }
+            recipeRepository.insertRecipe(recipe)
         }
     }
 
-    // Aquí añadirías funciones para getRecipesByAuthor, updateRecipe, deleteRecipe, etc.
-    // fun getRecipesByAuthor(authorId: Long): StateFlow<List<Recipe>> { ... }
+    // --- NUEVA FUNCIÓN ---
+    fun toggleLike(userId: Long?, recipeId: Long) {
+        if (userId == null) return // Solo usuarios logueados pueden dar like
+        viewModelScope.launch {
+            try {
+                recipeRepository.toggleLikeRecipe(userId, recipeId)
+                // La UI se actualizará automáticamente porque observa el Flow de la receta
+            } catch (e: Exception) { /* Manejar error */ }
+        }
+    }
 }
-
-// Opcional: Podrías crear un RecipeUiState similar al AuthUiState
-// sealed class RecipeUiState { ... }

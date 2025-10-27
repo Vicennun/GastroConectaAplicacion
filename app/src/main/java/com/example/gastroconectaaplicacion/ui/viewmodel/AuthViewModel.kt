@@ -1,39 +1,36 @@
-package com.example.gastroconectaaplicacion.ui.viewmodel
+package com.example.gastroconectaaplicacion.ui.viewmodel // Verifica
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gastroconectaaplicacion.data.model.User
 import com.example.gastroconectaaplicacion.data.repository.UserRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.* // Asegúrate de importar flow
 import kotlinx.coroutines.launch
 
-// 1. Pide el Repositorio en el constructor
 class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
 
-    // 2. Estados que la UI (Compose) observará (Cumple Req 3: responder a cambios de estado)
-
-    // Estado de la UI (Cargando, Error, Éxito, Inactivo)
-    // Es privado para que solo el ViewModel pueda modificarlo
     private val _uiState = MutableStateFlow<AuthUiState>(AuthUiState.Idle)
-    // Es público para que la UI pueda leerlo
     val uiState: StateFlow<AuthUiState> = _uiState.asStateFlow()
 
-    // Estado del usuario actual (null si no está logueado)
-    private val _currentUser = MutableStateFlow<User?>(null)
+    private val _currentUser = MutableStateFlow<User?>(null) // Mantenlo Mutable para poder actualizarlo
     val currentUser: StateFlow<User?> = _currentUser.asStateFlow()
 
-    // 3. Funciones de Lógica (Login/Registro)
+    // --- NUEVO: Cargar usuario al inicio (simula sesión persistente) ---
+    // init {
+    //     viewModelScope.launch {
+    //         // Aquí podrías leer un ID de usuario guardado en SharedPreferences
+    //         // y luego cargarlo con userRepository.getUserById(savedId)
+    //         // Por ahora, lo dejamos así, el usuario se carga al hacer login.
+    //     }
+    // }
+
     fun login(email: String, pass: String) {
-        // Inicia una corutina en el hilo del ViewModel
         viewModelScope.launch {
-            _uiState.value = AuthUiState.Loading // Estado: Cargando
+            _uiState.value = AuthUiState.Loading
             try {
-                // Llama al repositorio (que llama al DAO)
                 val user = userRepository.loginUser(email, pass)
                 if (user != null) {
-                    _currentUser.value = user
+                    _currentUser.value = user // Actualiza el usuario actual
                     _uiState.value = AuthUiState.Success
                 } else {
                     _uiState.value = AuthUiState.Error("Email o contraseña incorrectos")
@@ -48,35 +45,59 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
             try {
-                // (Validación simple)
                 if (nombre.isBlank() || email.isBlank() || pass.isBlank()) {
                     _uiState.value = AuthUiState.Error("Todos los campos son obligatorios")
                     return@launch
                 }
-
+                // Simplificado: No hashear contraseña
                 val newUser = User(nombre = nombre, email = email, password_hash = pass)
                 userRepository.registerUser(newUser)
-
-                // Hacemos auto-login después de registrar
-                login(email, pass)
+                login(email, pass) // Auto-login
             } catch (e: Exception) {
-                // Esto fallará si el email ya existe (gracias al OnConflict.ABORT del DAO)
                 _uiState.value = AuthUiState.Error("Este email ya está en uso")
             }
         }
     }
 
-    // Función para resetear el estado (ej. al salir de la pantalla de error)
+    // --- NUEVA FUNCIÓN: Logout ---
+    fun logout() {
+        _currentUser.value = null // Borra el usuario actual
+        // Aquí podrías borrar también el ID guardado en SharedPreferences
+        _uiState.value = AuthUiState.Idle // Vuelve al estado inicial
+    }
+
+    // --- NUEVAS FUNCIONES: Acciones del usuario ---
+    fun toggleSave(recipeId: Long) {
+        val userId = _currentUser.value?.id ?: return // Solo si hay usuario logueado
+        viewModelScope.launch {
+            try {
+                userRepository.toggleSaveRecipe(userId, recipeId)
+                // Actualiza el currentUser local para reflejar el cambio inmediatamente en la UI
+                _currentUser.value = userRepository.getUserById(userId)
+            } catch (e: Exception) { /* Manejar error si es necesario */ }
+        }
+    }
+
+    fun toggleFollow(targetUserId: Long) {
+        val userId = _currentUser.value?.id ?: return
+        if (userId == targetUserId) return // No te sigas a ti mismo
+        viewModelScope.launch {
+            try {
+                userRepository.toggleFollowUser(userId, targetUserId)
+                // Actualiza el currentUser local
+                _currentUser.value = userRepository.getUserById(userId)
+            } catch (e: Exception) { /* Manejar error */ }
+        }
+    }
+
     fun resetState() {
         _uiState.value = AuthUiState.Idle
     }
 }
 
-// 4. Clase sellada (sealed class) para definir los estados de la UI
-// Esto es mucho más limpio que manejar un "isLoading", "isError", etc.
 sealed class AuthUiState {
-    object Idle : AuthUiState() // Inactivo
-    object Loading : AuthUiState() // Cargando
-    object Success : AuthUiState() // Éxito
-    data class Error(val message: String) : AuthUiState() // Error con mensaje
+    object Idle : AuthUiState()
+    object Loading : AuthUiState()
+    object Success : AuthUiState()
+    data class Error(val message: String) : AuthUiState()
 }
