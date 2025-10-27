@@ -1,14 +1,20 @@
-package com.example.gastroconectaaplicacion.ui.navigation
+package com.example.gastroconectaaplicacion.ui.navigation // Verifica paquete
 
-import androidx.compose.material3.Text
+import androidx.compose.material3.Text // Asegúrate que esté importado
 import androidx.compose.runtime.Composable
+import androidx.navigation.NavType // Necesario para argumentos
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument // Necesario para argumentos
 
-// Importaremos estas pantallas en el siguiente paso
-// import com.example.gastroconectaapp.ui.screens.LoginScreen
-// import com.example.gastroconectaapp.ui.screens.RegisterScreen
+// Importa TODAS tus pantallas
+import com.example.gastroconectaaplicacion.ui.screens.LoginScreen // Verifica import
+import com.example.gastroconectaaplicacion.ui.screens.RegisterScreen // Verifica import
+import com.example.gastroconectaaplicacion.ui.screens.HomeScreen // Verifica import
+import com.example.gastroconectaaplicacion.ui.screens.CreateRecipeScreen // Verifica import
+import com.example.gastroconectaaplicacion.ui.screens.RecipeDetailScreen // Verifica import
+import com.example.gastroconectaaplicacion.ui.screens.ProfileScreen // Verifica import
 
 @Composable
 fun AppNavigation() {
@@ -18,21 +24,30 @@ fun AppNavigation() {
         navController = navController,
         startDestination = AppScreens.LoginScreen.route // La app empieza en Login
     ) {
-
-        // Ruta para la pantalla de Login
         composable(route = AppScreens.LoginScreen.route) {
-            // Por ahora, solo un texto. Luego crearemos la pantalla completa.
-            Text("Pantalla de Login")
-            // LoginScreen(navController) // <-- Esto lo usaremos después
+            LoginScreen(navController)
         }
-
-        // Ruta para la pantalla de Registro
         composable(route = AppScreens.RegisterScreen.route) {
-            // Por ahora, solo un texto.
-            Text("Pantalla de Registro")
-            // RegisterScreen(navController) // <-- Esto lo usaremos después
+            RegisterScreen(navController)
         }
-
-        // (Aquí añadiremos las otras rutas: Home, Detalle, etc.)
+        composable(route = AppScreens.HomeScreen.route) {
+            HomeScreen(navController)
+        }
+        composable(route = AppScreens.CreateRecipeScreen.route) {
+            CreateRecipeScreen(navController)
+        }
+        // Ruta para Detalle, extrayendo el ID
+        composable(
+            route = AppScreens.RecipeDetailScreen.route,
+            arguments = listOf(navArgument("recipeId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            // Extrae el ID de los argumentos de la ruta
+            val recipeId = backStackEntry.arguments?.getLong("recipeId") ?: 0L // Usa 0L como ID inválido por defecto
+            RecipeDetailScreen(navController, recipeId)
+        }
+        composable(route = AppScreens.ProfileScreen.route) {
+            ProfileScreen(navController)
+        }
+        // Puedes añadir más rutas aquí si es necesario
     }
 }

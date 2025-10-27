@@ -1,11 +1,15 @@
-package com.example.gastroconectaaplicacion.ui.navigation
+package com.example.gastroconectaaplicacion.ui.navigation // Verifica paquete
 
-// Define todas las pantallas/rutas de nuestra aplicación
 sealed class AppScreens(val route: String) {
     object LoginScreen : AppScreens("login_screen")
     object RegisterScreen : AppScreens("register_screen")
-
-    // Añadiremos estas más adelante
-    // object HomeScreen : AppScreens("home_screen")
-    // object DetailScreen : AppScreens("detail_screen/{recipeId}") // Ruta con argumento
+    object HomeScreen : AppScreens("home_screen") // Ruta para Home
+    object CreateRecipeScreen : AppScreens("create_recipe_screen") // Ruta para Crear Receta
+    // Ruta para Detalle (con argumento recipeId)
+    object RecipeDetailScreen : AppScreens("recipe_detail_screen/{recipeId}") {
+        // Función helper para construir la ruta al navegar
+        fun createRoute(recipeId: Long) = "recipe_detail_screen/$recipeId"
+    }
+    object ProfileScreen : AppScreens("profile_screen") // Ruta para Mi Perfil
+    // Podrías añadir otras, como ver el perfil de otro usuario
 }
