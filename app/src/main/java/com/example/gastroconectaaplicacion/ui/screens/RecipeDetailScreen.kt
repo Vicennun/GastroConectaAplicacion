@@ -1,13 +1,14 @@
 package com.example.gastroconectaaplicacion.ui.screens // Verifica
 
+import androidx.compose.ui.res.painterResource
+import com.example.gastroconectaaplicacion.R
 import android.app.Application
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn // Cambiado a LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -98,7 +99,11 @@ fun RecipeDetailScreen(navController: NavController, recipeId: Long) {
                 // Botones Like / Guardar (con lógica básica)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     // Botón Like
-                    IconButton(onClick = { recipeViewModel.toggleLike(userId, recipe.id) }) {
+                    IconButton(onClick = {
+                        if (userId != null) { // Asegurarse que el usuario no es nulo
+                            recipeViewModel.toggleLike(userId, recipe.id)
+                        }
+                    }) {
                         Icon(
                             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                             contentDescription = "Like",
@@ -109,14 +114,24 @@ fun RecipeDetailScreen(navController: NavController, recipeId: Long) {
 
                     Spacer(modifier = Modifier.width(16.dp))
 
-                    // Botón Guardar
-                    IconButton(onClick = { authViewModel.toggleSave(recipe.id) }) {
+                    // Botón Guardar (Corregido con XML Drawables)
+                    IconButton(onClick = {
+                        if (currentUser != null) {
+                            authViewModel.toggleSave(recipe.id)
+                        }
+                    }) {
                         Icon(
-                            imageVector = if (isSaved) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                            // Usa painterResource para cargar tus XML de res/drawable
+                            painter = if (isSaved) {
+                                painterResource(id = R.drawable.ic_bookmark_filled)
+                            } else {
+                                painterResource(id = R.drawable.ic_bookmark_border)
+                            },
                             contentDescription = "Guardar",
                             tint = if (isSaved) MaterialTheme.colorScheme.primary else LocalContentColor.current
                         )
                     }
+
                     Text(if (isSaved) "Guardado" else "Guardar")
 
                     // Podrías añadir botón Seguir Autor aquí
