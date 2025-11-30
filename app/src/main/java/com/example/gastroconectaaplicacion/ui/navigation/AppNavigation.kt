@@ -54,8 +54,12 @@ fun AppNavigation() {
             // Detalle necesita ambos (para ver receta y para dar like/guardar)
             RecipeDetailScreen(navController, recipeId, authViewModel, recipeViewModel)
         }
-        composable(route = AppScreens.ProfileScreen.route) {
-            ProfileScreen(navController, authViewModel)
+        composable(AppScreens.ProfileScreen.route) {
+            ProfileScreen(
+                navController = navController,
+                authViewModel = authViewModel,
+                recipeViewModel = recipeViewModel // <--- ASEGÚRATE DE AGREGAR ESTO
+            )
         }
     }
 }

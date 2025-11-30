@@ -18,7 +18,13 @@ data class Recipe(
     val ingredientesSimples: List<String> = emptyList(),
 
     val comentarios: List<Comentario> = emptyList(),
-    val ratings: List<Rating> = emptyList()
+    val ratings: List<RecipeRating> = emptyList() // Cambiar List<Rating> por List<RecipeRating>
+)
+
+// Cambiar nombre de la clase data class Rating a:
+data class RecipeRating(
+    val userId: Long,
+    val score: Int
 )
 
 // Clases auxiliares para listas complejas
@@ -29,10 +35,7 @@ data class Comentario(
     val fecha: String? = null
 )
 
-data class Rating(
-    val userId: Long,
-    val score: Int
-)
+
 
 // Clase helper para la UI (si la necesitas para formularios locales)
 data class IngredientUI(

@@ -1,7 +1,7 @@
 package com.example.gastroconectaaplicacion.data.repository
 
 import com.example.gastroconectaaplicacion.data.model.Comentario
-import com.example.gastroconectaaplicacion.data.model.Rating
+import com.example.gastroconectaaplicacion.data.model.RecipeRating
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import com.example.gastroconectaaplicacion.data.network.RetrofitClient
 
@@ -43,7 +43,7 @@ class RecipeRepository {
         } catch (e: Exception) { null }
     }
 
-    suspend fun rateRecipe(recipeId: Long, rating: Rating): Recipe? {
+    suspend fun rateRecipe(recipeId: Long, rating: RecipeRating): Recipe? {
         return try {
             val response = api.rateRecipe(recipeId, rating)
             if (response.isSuccessful) response.body() else null

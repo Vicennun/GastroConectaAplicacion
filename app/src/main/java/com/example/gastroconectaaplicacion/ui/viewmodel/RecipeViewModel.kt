@@ -3,7 +3,7 @@ package com.example.gastroconectaaplicacion.ui.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.gastroconectaaplicacion.data.model.Comentario
-import com.example.gastroconectaaplicacion.data.model.Rating
+import com.example.gastroconectaaplicacion.data.model.RecipeRating
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import com.example.gastroconectaaplicacion.data.repository.RecipeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -64,7 +64,7 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    fun rateRecipe(recipeId: Long, rating: Rating) {
+    fun rateRecipe(recipeId: Long, rating: RecipeRating) {
         viewModelScope.launch {
             val updated = repository.rateRecipe(recipeId, rating)
             if (updated != null) updateLocalRecipe(updated)

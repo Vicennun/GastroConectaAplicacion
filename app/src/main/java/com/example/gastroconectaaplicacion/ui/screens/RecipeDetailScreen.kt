@@ -1,14 +1,16 @@
 package com.example.gastroconectaaplicacion.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.ui.res.painterResource
 import com.example.gastroconectaaplicacion.R
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items // Importante para la lista de comentarios
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material.icons.filled.Send // Icono para enviar
+import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Star // Importante para las estrellas
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -19,11 +21,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.gastroconectaaplicacion.data.model.Comentario // Importa tu modelo
+import com.example.gastroconectaaplicacion.data.model.Comentario
+import com.example.gastroconectaaplicacion.data.model.RecipeRating
 import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel
 import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel
 
@@ -43,15 +45,30 @@ fun RecipeDetailScreen(
 
     // Estado local para el texto del nuevo comentario
     var commentText by remember { mutableStateOf("") }
-    // Estado para saber si se está enviando (opcional, para feedback visual)
+    // Estado para saber si se está enviando
     var isSendingComment by remember { mutableStateOf(false) }
 
-    // --- ESTADOS DERIVADOS ---
+    // --- ESTADOS DERIVADOS (Likes y Guardados) ---
     val isLiked = remember(recipe, userId) {
         recipe?.likes?.contains(userId) == true
     }
     val isSaved = remember(currentUser, recipeId) {
         currentUser?.recetario?.contains(recipeId) == true
+    }
+
+    // --- ESTADOS DERIVADOS (Rating) ---
+    val averageRating = remember(recipe) {
+        if (recipe == null || recipe.ratings.isEmpty()) 0.0
+        else {
+            val sum = recipe.ratings.sumOf { it.score }
+            // Redondear a 1 decimal
+            (sum.toDouble() / recipe.ratings.size * 10).toInt() / 10.0
+        }
+    }
+
+    // Tu voto actual (si existe)
+    val myRatingScore = remember(recipe, userId) {
+        recipe?.ratings?.find { it.userId == userId }?.score ?: 0
     }
 
     if (recipe == null) {
@@ -62,14 +79,19 @@ fun RecipeDetailScreen(
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
             contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp) // Espacio vertical entre items
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // --- BLOQUE 1: INFORMACIÓN PRINCIPAL (Header, Foto, Descripción) ---
+            // --- BLOQUE 1: INFORMACIÓN PRINCIPAL ---
             item {
                 Text(recipe.titulo, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                Text("Por: ${recipe.autorNombre}", style = MaterialTheme.typography.bodySmall)
-                Text("Tiempo: ${recipe.tiempoPreparacion}", style = MaterialTheme.typography.bodySmall)
+
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Por: ${recipe.autorNombre}", style = MaterialTheme.typography.bodySmall)
+                    Spacer(modifier = Modifier.width(16.dp))
+                    Text("Tiempo: ${recipe.tiempoPreparacion}", style = MaterialTheme.typography.bodySmall)
+                }
+
                 Spacer(modifier = Modifier.height(16.dp))
 
                 AsyncImage(
@@ -85,35 +107,91 @@ fun RecipeDetailScreen(
                 )
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // --- SISTEMA DE RATING ---
+                Text("Calificación:", style = MaterialTheme.typography.titleMedium)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    // Texto Promedio
+                    Text(
+                        text = "$averageRating",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "/5 (${recipe.ratings.size} votos)",
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(start = 4.dp)
+                    )
+
+                    Spacer(modifier = Modifier.weight(1f)) // Empuja las estrellas a la derecha
+
+                    // Estrellas Interactivas
+                    Row {
+                        for (i in 1..5) {
+                            Icon(
+                                imageVector = Icons.Filled.Star,
+                                contentDescription = "Estrella $i",
+                                tint = if (i <= myRatingScore) Color(0xFFFFD700) else Color.Gray.copy(alpha = 0.3f), // Dorado o Gris
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clickable {
+                                        if (currentUser != null) {
+                                            // Enviar calificación al ViewModel
+                                            recipeViewModel.rateRecipe(
+                                                recipe.id,
+                                                RecipeRating(userId = currentUser!!.id, score = i)
+                                            )
+                                        }
+                                    }
+                            )
+                        }
+                    }
+                }
+                if (currentUser == null) {
+                    Text("Inicia sesión para calificar.", style = MaterialTheme.typography.bodySmall, color = Color.Gray)
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 Text(recipe.descripcion)
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // Etiquetas
-                Text("Etiquetas:", style = MaterialTheme.typography.titleMedium)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    recipe.etiquetasDieteticas.forEach { etiqueta ->
-                        SuggestionChip(onClick = { }, label = { Text(etiqueta) })
+                if (recipe.etiquetasDieteticas.isNotEmpty()) {
+                    Text("Etiquetas:", style = MaterialTheme.typography.titleMedium)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        recipe.etiquetasDieteticas.forEach { etiqueta ->
+                            SuggestionChip(onClick = { }, label = { Text(etiqueta) })
+                        }
                     }
                 }
 
                 // Botones de Acción (Like, Guardar)
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 8.dp)
+                ) {
+                    // Like
                     IconButton(onClick = {
                         if (userId != null) recipeViewModel.toggleLike(recipe.id, userId)
                     }) {
                         Icon(
                             imageVector = if (isLiked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
                             contentDescription = "Like",
-                            tint = if (isLiked) MaterialTheme.colorScheme.primary else LocalContentColor.current
+                            tint = if (isLiked) Color.Red else LocalContentColor.current
                         )
                     }
                     Text("${recipe.likes.size}")
 
-                    Spacer(modifier = Modifier.width(16.dp))
+                    Spacer(modifier = Modifier.width(24.dp))
 
+                    // Guardar
                     IconButton(onClick = {
                         if (currentUser != null) authViewModel.toggleSave(recipe.id)
                     }) {
@@ -132,8 +210,12 @@ fun RecipeDetailScreen(
                 Text("Ingredientes:", style = MaterialTheme.typography.titleMedium)
                 Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
                     Column(modifier = Modifier.padding(16.dp).fillMaxWidth()) {
-                        recipe.ingredientesSimples.forEach { ingTexto ->
-                            Text("• $ingTexto", modifier = Modifier.padding(vertical = 2.dp))
+                        if (recipe.ingredientesSimples.isNotEmpty()) {
+                            recipe.ingredientesSimples.forEach { ingTexto ->
+                                Text("• $ingTexto", modifier = Modifier.padding(vertical = 2.dp))
+                            }
+                        } else {
+                            Text("No hay ingredientes registrados.")
                         }
                     }
                 }
@@ -143,15 +225,19 @@ fun RecipeDetailScreen(
             item {
                 Text("Pasos:", style = MaterialTheme.typography.titleMedium)
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    recipe.pasos.forEachIndexed { index, paso ->
-                        Row(modifier = Modifier.fillMaxWidth()) {
-                            Text(
-                                text = "${index + 1}.",
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.width(24.dp)
-                            )
-                            Text(text = paso)
+                    if (recipe.pasos.isNotEmpty()) {
+                        recipe.pasos.forEachIndexed { index, paso ->
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = "${index + 1}.",
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.width(24.dp)
+                                )
+                                Text(text = paso)
+                            }
                         }
+                    } else {
+                        Text("No hay pasos registrados.")
                     }
                 }
             }
@@ -181,16 +267,12 @@ fun RecipeDetailScreen(
                             onClick = {
                                 if (commentText.isNotBlank()) {
                                     isSendingComment = true
-                                    // Crear objeto Comentario
                                     val nuevoComentario = Comentario(
                                         autorId = currentUser!!.id,
                                         autorNombre = currentUser!!.name,
                                         texto = commentText
                                     )
-                                    // Llamar al ViewModel
                                     recipeViewModel.addComment(recipe.id, nuevoComentario)
-
-                                    // Limpiar UI
                                     commentText = ""
                                     isSendingComment = false
                                 }
@@ -223,7 +305,6 @@ fun RecipeDetailScreen(
     }
 }
 
-// Componente individual para cada comentario
 @Composable
 fun CommentItem(comentario: Comentario) {
     Card(
