@@ -8,6 +8,7 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable // Importante para el fix de etiquetas
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import coil.compose.rememberAsyncImagePainter // Necesitas agregar Coil a build.gradle si no lo tienes, o usar lógica nativa
+import coil.compose.rememberAsyncImagePainter
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel
 import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel
@@ -33,25 +34,29 @@ val OPCIONES_DIETETICAS = listOf(
 fun CreateRecipeScreen(
     navController: NavController,
     authViewModel: AuthViewModel,
-    recipeViewModel: RecipeViewModel // Inyectamos este también
+    recipeViewModel: RecipeViewModel
 ) {
     val currentUser by authViewModel.currentUser.collectAsState()
     val context = LocalContext.current
 
-    // Estados del formulario
+    // --- Estados del formulario ---
     var titulo by remember { mutableStateOf("") }
     var descripcion by remember { mutableStateOf("") }
     var tiempo by remember { mutableStateOf("") }
 
-    // IMAGEN
+    // Imagen
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var fotoBase64 by remember { mutableStateOf("") }
 
+    // Datos
     var ingredientesText by remember { mutableStateOf("") }
     var pasosText by remember { mutableStateOf("") }
     var etiquetasSeleccionadas by remember { mutableStateOf<List<String>>(emptyList()) }
 
-    // Selector de imágenes
+    // Manejo de errores
+    var error by remember { mutableStateOf<String?>(null) }
+
+    // Selector de imágenes de la galería
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -77,8 +82,6 @@ fun CreateRecipeScreen(
         }
 
         if (imageUri != null) {
-            // Muestra previa (requiere librería Coil: io.coil-kt:coil-compose:2.4.0)
-            // Si no tienes Coil, puedes quitar este bloque Image
             Image(
                 painter = rememberAsyncImagePainter(imageUri),
                 contentDescription = null,
@@ -86,40 +89,93 @@ fun CreateRecipeScreen(
             )
         }
 
+        // --- CAMPOS DE TEXTO ---
         OutlinedTextField(value = titulo, onValueChange = { titulo = it }, label = { Text("Título") }, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(8.dp))
+
         OutlinedTextField(value = descripcion, onValueChange = { descripcion = it }, label = { Text("Descripción") }, modifier = Modifier.fillMaxWidth())
-        OutlinedTextField(value = tiempo, onValueChange = { tiempo = it }, label = { Text("Tiempo") }, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedTextField(value = tiempo, onValueChange = { tiempo = it }, label = { Text("Tiempo (ej. 30 min)") }, modifier = Modifier.fillMaxWidth())
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = ingredientesText,
             onValueChange = { ingredientesText = it },
-            label = { Text("Ingredientes (Nombre - Cantidad por línea)") },
+            label = { Text("Ingredientes (Uno por línea)") },
             modifier = Modifier.fillMaxWidth().height(100.dp)
         )
+        Spacer(modifier = Modifier.height(8.dp))
 
         OutlinedTextField(
             value = pasosText,
             onValueChange = { pasosText = it },
-            label = { Text("Pasos (uno por línea)") },
+            label = { Text("Pasos (Uno por línea)") },
             modifier = Modifier.fillMaxWidth().height(100.dp)
         )
 
         Spacer(modifier = Modifier.height(16.dp))
+
+        // --- ETIQUETAS (SECCIÓN CORREGIDA) ---
+        Text("Etiquetas Dietéticas:", style = MaterialTheme.typography.titleMedium)
+
+        Column {
+            // Divide la lista en pares para mostrar 2 por fila
+            OPCIONES_DIETETICAS.chunked(2).forEach { rowOptions ->
+                Row(modifier = Modifier.fillMaxWidth()) {
+                    rowOptions.forEach { option ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable {
+                                    // Lógica de selección al tocar la fila completa
+                                    etiquetasSeleccionadas = if (etiquetasSeleccionadas.contains(option)) {
+                                        etiquetasSeleccionadas - option
+                                    } else {
+                                        etiquetasSeleccionadas + option
+                                    }
+                                }
+                                .padding(8.dp) // Área táctil más grande
+                        ) {
+                            Checkbox(
+                                checked = etiquetasSeleccionadas.contains(option),
+                                onCheckedChange = null // Desactivamos el clic propio del checkbox para evitar conflictos
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(option, style = MaterialTheme.typography.bodyMedium)
+                        }
+                    }
+                    // Si la fila tiene un número impar, rellenamos el espacio vacío
+                    if (rowOptions.size < 2) {
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+            }
+        }
+
+        // --- MENSAJE DE ERROR ---
+        if (error != null) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(error!!, color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // --- BOTÓN PUBLICAR ---
         Button(
             onClick = {
                 val user = currentUser ?: return@Button
 
-                // 1. Convertir el texto de ingredientes a Lista de Strings
-                // El backend espera: ["Harina - 1 taza", "Huevos - 2"]
-                val listaIngredientes = ingredientesText.lines()
-                    .filter { it.isNotBlank() }
-                    .map { it.trim() }
+                // Validaciones básicas
+                if (titulo.isBlank() || descripcion.isBlank()) {
+                    error = "El título y la descripción son obligatorios"
+                    return@Button
+                }
 
-                val listaPasos = pasosText.lines()
-                    .filter { it.isNotBlank() }
-                    .map { it.trim() }
-
-                // Usamos la foto Base64 si existe, sino un placeholder
+                // Convertir textos a listas
+                val listaIngredientes = ingredientesText.lines().filter { it.isNotBlank() }
+                val listaPasos = pasosText.lines().filter { it.isNotBlank() }
                 val fotoFinal = if (fotoBase64.isNotBlank()) fotoBase64 else "https://via.placeholder.com/300"
 
                 val receta = Recipe(
@@ -127,23 +183,21 @@ fun CreateRecipeScreen(
                     descripcion = descripcion,
                     tiempoPreparacion = tiempo,
                     autorId = user.id,
-
-                    // CORRECCIÓN 1: user.name
                     autorNombre = user.name,
-
-                    // CORRECCIÓN 2: fotoFinal en el campo 'foto'
                     foto = fotoFinal,
-
-                    // CORRECCIÓN 3: Asignar a 'ingredientesSimples'
                     ingredientesSimples = listaIngredientes,
-
                     pasos = listaPasos,
                     etiquetasDieteticas = etiquetasSeleccionadas
-                    // El resto de campos (ratings, comentarios) tienen valores por defecto en el modelo
                 )
 
-                recipeViewModel.addRecipe(receta)
-                navController.popBackStack()
+                // Enviamos y esperamos el resultado
+                recipeViewModel.addRecipe(receta) { exito ->
+                    if (exito) {
+                        navController.popBackStack()
+                    } else {
+                        error = "Error al subir la receta. Intenta de nuevo."
+                    }
+                }
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -158,7 +212,7 @@ fun uriToBase64(context: Context, uri: Uri): String? {
         val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
         val bitmap = BitmapFactory.decodeStream(inputStream)
         val outputStream = ByteArrayOutputStream()
-        // Comprimimos a JPEG calidad 50 para que no sea gigante
+        // Comprimimos a JPEG calidad 50 para que no sea gigante y pase rápido por la red
         bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
         val byteArray = outputStream.toByteArray()
         "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)

@@ -34,12 +34,18 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
         }
     }
 
-    fun addRecipe(recipe: Recipe) {
+    fun addRecipe(recipe: Recipe, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
+            _isLoading.value = true // (Opcional) Activar carga
             val newRecipe = repository.addRecipe(recipe)
+            _isLoading.value = false
+
             if (newRecipe != null) {
-                // Actualizamos la lista localmente agregando la nueva al principio
+                // Actualizamos la lista local
                 _recipes.value = listOf(newRecipe) + _recipes.value
+                onResult(true) // ¡ÉXITO! Avisamos a la pantalla
+            } else {
+                onResult(false) // FALLÓ
             }
         }
     }

@@ -64,8 +64,8 @@ fun RecipeDetailScreen(
             item {
                 Text(recipe.titulo, style = MaterialTheme.typography.headlineMedium)
                 Spacer(modifier = Modifier.height(8.dp))
-                // TODO: Buscar nombre del autor con UserRepository
-                Text("Por: Autor ID ${recipe.autorId}", style = MaterialTheme.typography.bodySmall)
+                // --- CORRECCIÓN: Mostrar el nombre real, no el ID ---
+                Text("Por: ${recipe.autorNombre}", style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("Tiempo: ${recipe.tiempoPreparacion}", style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(16.dp))

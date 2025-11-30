@@ -6,6 +6,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -30,7 +31,14 @@ fun HomeScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(title = { Text("GastroConecta") })
+            TopAppBar(
+                title = { Text("GastroConecta") },
+                actions = {
+                    IconButton(onClick = { navController.navigate(AppScreens.ProfileScreen.route) }) {
+                        Icon(Icons.Filled.Person, contentDescription = "Mi Perfil")
+                    }
+                }
+            )
             // Aquí podrías añadir icono de búsqueda/filtros
         },
         floatingActionButton = {
