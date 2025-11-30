@@ -1,63 +1,51 @@
-package com.example.gastroconectaaplicacion.data.repository // Verifica
+package com.example.gastroconectaaplicacion.data.repository
 
-import com.example.gastroconectaaplicacion.data.dao.UserDao
+import com.example.gastroconectaaplicacion.data.model.LoginRequest
 import com.example.gastroconectaaplicacion.data.model.User
+import com.example.gastroconectaaplicacion.data.network.RetrofitClient
 
-class UserRepository(private val userDao: UserDao) {
+class UserRepository {
 
-    suspend fun registerUser(user: User) {
-        userDao.insertUser(user)
+    private val api = RetrofitClient.apiService
+
+    suspend fun loginUser(email: String, pass: String): User? {
+        return try {
+            val response = api.login(LoginRequest(email, pass))
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
     }
 
-    suspend fun loginUser(email: String, password: String): User? {
-        val user = userDao.getUserByEmail(email)
-        // Simplificado: Compara hash directamente (deberías usar una librería de hashing)
-        if (user != null && user.password_hash == password) {
-            return user
+    suspend fun registerUser(user: User): User? {
+        return try {
+            val response = api.register(user)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
         }
-        return null
     }
 
     suspend fun getUserById(id: Long): User? {
-        return userDao.getUserById(id)
+        return try {
+            val response = api.getUserById(id)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
     }
 
-    // --- NUEVAS FUNCIONES ---
-
-    // Guarda/Quita receta del recetario del usuario
-    suspend fun toggleSaveRecipe(userId: Long, recipeId: Long) {
-        val user = userDao.getUserById(userId) ?: return // Sal si el usuario no existe
-        val updatedRecetario = if (user.recetario.contains(recipeId)) {
-            user.recetario - recipeId // Quita el ID
-        } else {
-            user.recetario + recipeId // Añade el ID
-        }
-        userDao.updateUser(user.copy(recetario = updatedRecetario))
+    suspend fun toggleFollowUser(userId: Long, targetId: Long): User? {
+        return try {
+            val response = api.followUser(userId, targetId)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
     }
 
-    // Sigue/Deja de seguir a otro usuario
-    suspend fun toggleFollowUser(currentUserId: Long, targetUserId: Long) {
-        if (currentUserId == targetUserId) return // No te puedes seguir a ti mismo
-
-        val currentUser = userDao.getUserById(currentUserId) ?: return
-        val targetUser = userDao.getUserById(targetUserId) ?: return
-
-        val isFollowing = currentUser.siguiendo.contains(targetUserId)
-
-        // Actualiza lista 'siguiendo' del usuario actual
-        val updatedFollowing = if (isFollowing) {
-            currentUser.siguiendo - targetUserId
-        } else {
-            currentUser.siguiendo + targetUserId
-        }
-        userDao.updateUser(currentUser.copy(siguiendo = updatedFollowing))
-
-        // Actualiza lista 'seguidores' del usuario objetivo
-        val updatedFollowers = if (isFollowing) {
-            targetUser.seguidores - currentUserId
-        } else {
-            targetUser.seguidores + currentUserId
-        }
-        userDao.updateUser(targetUser.copy(seguidores = updatedFollowers))
+    suspend fun toggleSaveRecipe(userId: Long, recipeId: Long): User? {
+        return try {
+            val response = api.saveRecipe(userId, recipeId)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
     }
 }

@@ -43,10 +43,18 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
+
+    // RETROFIT & GSON (Agregar estas dos)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
+    // Viewmodel Compose (Ya deberías tenerlas, pero confirma)
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("io.coil-kt:coil-compose:2.4.0")
+    // implementation(libs.androidx.room.runtime)
+    // implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.navigation.compose)
-    kapt(libs.androidx.room.compiler)
+    // kapt(libs.androidx.room.compiler)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

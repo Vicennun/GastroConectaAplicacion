@@ -1,39 +1,71 @@
-package com.example.gastroconectaaplicacion.ui.viewmodel // Verifica
+package com.example.gastroconectaaplicacion.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.gastroconectaaplicacion.data.model.Comentario
+import com.example.gastroconectaaplicacion.data.model.Rating
 import com.example.gastroconectaaplicacion.data.model.Recipe
 import com.example.gastroconectaaplicacion.data.repository.RecipeRepository
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class RecipeViewModel(private val recipeRepository: RecipeRepository) : ViewModel() {
+class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
-    val allRecipes: StateFlow<List<Recipe>> = recipeRepository.allRecipes
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000L),
-            initialValue = emptyList()
-        )
+    private val _recipes = MutableStateFlow<List<Recipe>>(emptyList())
+    val recipes: StateFlow<List<Recipe>> = _recipes.asStateFlow()
 
-    fun getRecipeById(id: Long): Flow<Recipe?> {
-        return recipeRepository.getRecipeById(id)
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
+
+    // Cargar recetas al iniciar
+    init {
+        refreshRecipes()
+    }
+
+    fun refreshRecipes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            val list = repository.getAllRecipes()
+            _recipes.value = list
+            _isLoading.value = false
+        }
     }
 
     fun addRecipe(recipe: Recipe) {
         viewModelScope.launch {
-            recipeRepository.insertRecipe(recipe)
+            val newRecipe = repository.addRecipe(recipe)
+            if (newRecipe != null) {
+                // Actualizamos la lista localmente agregando la nueva al principio
+                _recipes.value = listOf(newRecipe) + _recipes.value
+            }
         }
     }
 
-    // --- NUEVA FUNCIÓN ---
-    fun toggleLike(userId: Long?, recipeId: Long) {
-        if (userId == null) return // Solo usuarios logueados pueden dar like
+    fun toggleLike(recipeId: Long, userId: Long) {
         viewModelScope.launch {
-            try {
-                recipeRepository.toggleLikeRecipe(userId, recipeId)
-                // La UI se actualizará automáticamente porque observa el Flow de la receta
-            } catch (e: Exception) { /* Manejar error */ }
+            val updated = repository.toggleLikeRecipe(recipeId, userId)
+            if (updated != null) updateLocalRecipe(updated)
         }
+    }
+
+    fun addComment(recipeId: Long, comentario: Comentario) {
+        viewModelScope.launch {
+            val updated = repository.addComment(recipeId, comentario)
+            if (updated != null) updateLocalRecipe(updated)
+        }
+    }
+
+    fun rateRecipe(recipeId: Long, rating: Rating) {
+        viewModelScope.launch {
+            val updated = repository.rateRecipe(recipeId, rating)
+            if (updated != null) updateLocalRecipe(updated)
+        }
+    }
+
+    // Helper para actualizar una receta específica en la lista sin recargar todo
+    private fun updateLocalRecipe(updatedRecipe: Recipe) {
+        _recipes.value = _recipes.value.map { if (it.id == updatedRecipe.id) updatedRecipe else it }
     }
 }

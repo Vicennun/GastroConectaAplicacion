@@ -1,37 +1,52 @@
-package com.example.gastroconectaaplicacion.data.repository // Verifica
+package com.example.gastroconectaaplicacion.data.repository
 
-import com.example.gastroconectaaplicacion.data.dao.RecipeDao
+import com.example.gastroconectaaplicacion.data.model.Comentario
+import com.example.gastroconectaaplicacion.data.model.Rating
 import com.example.gastroconectaaplicacion.data.model.Recipe
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
+import com.example.gastroconectaaplicacion.data.network.RetrofitClient
 
-class RecipeRepository(private val recipeDao: RecipeDao) {
+class RecipeRepository {
 
-    val allRecipes: Flow<List<Recipe>> = recipeDao.getAllRecipes()
+    private val api = RetrofitClient.apiService
 
-    fun getRecipeById(id: Long): Flow<Recipe?> {
-        return recipeDao.getRecipeById(id)
-    }
-
-    fun getRecipesByAuthor(autorId: Long): Flow<List<Recipe>> {
-        return recipeDao.getRecipesByAuthor(autorId)
-    }
-
-    suspend fun insertRecipe(recipe: Recipe) {
-        recipeDao.insertRecipe(recipe)
-    }
-
-    // --- NUEVA FUNCIÓN ---
-    // Añade/Quita like de un usuario a una receta
-    suspend fun toggleLikeRecipe(userId: Long, recipeId: Long) {
-        val recipeFlow = recipeDao.getRecipeById(recipeId)
-        val recipe = recipeFlow.first() ?: return
-
-        val updatedLikes = if (recipe.likes.contains(userId)) {
-            recipe.likes - userId // Quita el like
-        } else {
-            recipe.likes + userId // Añade el like
+    suspend fun getAllRecipes(): List<Recipe> {
+        return try {
+            val response = api.getAllRecipes()
+            if (response.isSuccessful) response.body() ?: emptyList() else emptyList()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            emptyList()
         }
-        recipeDao.updateRecipe(recipe.copy(likes = updatedLikes))
+    }
+
+    suspend fun addRecipe(recipe: Recipe): Recipe? {
+        return try {
+            val response = api.createRecipe(recipe)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    suspend fun toggleLikeRecipe(recipeId: Long, userId: Long): Recipe? {
+        return try {
+            val response = api.toggleLike(recipeId, userId)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
+    }
+
+    suspend fun addComment(recipeId: Long, comentario: Comentario): Recipe? {
+        return try {
+            val response = api.commentRecipe(recipeId, comentario)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
+    }
+
+    suspend fun rateRecipe(recipeId: Long, rating: Rating): Recipe? {
+        return try {
+            val response = api.rateRecipe(recipeId, rating)
+            if (response.isSuccessful) response.body() else null
+        } catch (e: Exception) { null }
     }
 }

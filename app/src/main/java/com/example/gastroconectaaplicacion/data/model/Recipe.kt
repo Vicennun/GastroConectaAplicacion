@@ -1,24 +1,41 @@
-package com.example.gastroconectaaplicacion.data.model // Verifica
+package com.example.gastroconectaaplicacion.data.model
 
-import androidx.room.Entity
-import androidx.room.PrimaryKey
-import androidx.room.TypeConverters
-
-@Entity(tableName = "recipes")
-@TypeConverters(Converters::class)
 data class Recipe(
-    @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val titulo: String,
     val descripcion: String,
     val tiempoPreparacion: String,
-    val fotoUrl: String,
     val autorId: Long,
-    val ingredientes: List<Ingredients>, // Ya tenías esto
-    val pasos: List<String>,             // Ya tenías esto
-    val etiquetasDieteticas: List<String>, // Ya tenías esto
+    val autorNombre: String,
+    val foto: String, // Recibirá URL o Base64
+    val confirmado: Boolean = false,
 
-    // --- NUEVO CAMPO ---
-    val likes: List<Long> = emptyList() // Lista de IDs de usuarios que dieron like
-    // Comentarios irían en otra tabla relacionada, lo omitimos por tiempo
+    val pasos: List<String> = emptyList(),
+    val etiquetasDieteticas: List<String> = emptyList(),
+    val likes: List<Long> = emptyList(),
+
+    // Backend envía strings "Harina - 1 taza"
+    val ingredientesSimples: List<String> = emptyList(),
+
+    val comentarios: List<Comentario> = emptyList(),
+    val ratings: List<Rating> = emptyList()
+)
+
+// Clases auxiliares para listas complejas
+data class Comentario(
+    val autorId: Long,
+    val autorNombre: String,
+    val texto: String,
+    val fecha: String? = null
+)
+
+data class Rating(
+    val userId: Long,
+    val score: Int
+)
+
+// Clase helper para la UI (si la necesitas para formularios locales)
+data class IngredientUI(
+    val nombre: String,
+    val cantidad: String
 )
