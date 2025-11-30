@@ -269,11 +269,43 @@ fun CreateRecipeScreen(
 
 fun uriToBase64(context: Context, uri: Uri): String? {
     return try {
-        val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-        val originalBitmap = BitmapFactory.decodeStream(inputStream)
-        // Redimensionamos antes de convertir
-        val resizedBitmap = resizeBitmap(originalBitmap, 1024)
-        bitmapToBase64(resizedBitmap)
+        // 1. Primero, leer solo las dimensiones de la imagen (sin cargarla en memoria)
+        val options = BitmapFactory.Options().apply {
+            inJustDecodeBounds = true
+        }
+        context.contentResolver.openInputStream(uri)?.use { input ->
+            BitmapFactory.decodeStream(input, null, options)
+        }
+
+        // 2. Calcular el factor de reducción para que no pase de 800x800 píxeles
+        // (Esto reduce drásticamente el uso de memoria y el tamaño final)
+        var inSampleSize = 1
+        val reqWidth = 800
+        val reqHeight = 800
+        val height = options.outHeight
+        val width = options.outWidth
+
+        if (height > reqHeight || width > reqWidth) {
+            val halfHeight = height / 2
+            val halfWidth = width / 2
+            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
+                inSampleSize *= 2
+            }
+        }
+
+        // 3. Cargar la imagen ya reducida
+        val actualOptions = BitmapFactory.Options().apply {
+            inSampleSize = inSampleSize
+        }
+        val inputStream = context.contentResolver.openInputStream(uri)
+        val bitmap = BitmapFactory.decodeStream(inputStream, null, actualOptions)
+
+        // 4. Comprimir a JPEG y convertir a Base64
+        val outputStream = ByteArrayOutputStream()
+        bitmap?.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Calidad 70 es suficiente
+        val byteArray = outputStream.toByteArray()
+
+        "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
     } catch (e: Exception) {
         e.printStackTrace()
         null
