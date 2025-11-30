@@ -1,7 +1,7 @@
 package com.example.gastroconectaaplicacion.data.model
 
 data class Recipe(
-    val id: Long = 0,
+    val id: Long? = null, // <--- IMPORTANTE: Long? = null
     val titulo: String,
     val descripcion: String,
     val tiempoPreparacion: String,

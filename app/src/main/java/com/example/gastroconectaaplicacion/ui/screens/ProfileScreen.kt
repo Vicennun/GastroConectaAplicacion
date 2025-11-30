@@ -157,7 +157,7 @@ fun RecipeListContent(
                 RecipeCard(
                     recipe = recipe,
                     onClick = {
-                        navController.navigate(AppScreens.RecipeDetailScreen.createRoute(recipe.id))
+                        navController.navigate(AppScreens.RecipeDetailScreen.createRoute(recipe.id ?: 0L))
                     }
                 )
             }
