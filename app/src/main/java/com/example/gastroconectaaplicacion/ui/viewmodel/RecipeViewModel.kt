@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.map
+import android.util.Log
 
 class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
@@ -36,17 +37,22 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
     fun addRecipe(recipe: Recipe, onResult: (Boolean) -> Unit) {
         viewModelScope.launch {
-            _isLoading.value = true // (Opcional) Activar carga
-            val newRecipe = repository.addRecipe(recipe)
-            _isLoading.value = false
-
-            if (newRecipe != null) {
-                // Actualizamos la lista local
-                _recipes.value = listOf(newRecipe) + _recipes.value
-                onResult(true) // ¡ÉXITO! Avisamos a la pantalla
-            } else {
-                onResult(false) // FALLÓ
+            // _isLoading.value = true // Puedes descomentar si usas loading
+            try {
+                val newRecipe = repository.addRecipe(recipe)
+                if (newRecipe != null) {
+                    _recipes.value = listOf(newRecipe) + _recipes.value
+                    onResult(true)
+                } else {
+                    Log.e("RecipeViewModel", "Error: La API devolvió null (posible error 400/500)")
+                    onResult(false)
+                }
+            } catch (e: Exception) {
+                // ¡ESTO ES VITAL! Ver el error real en el Logcat
+                Log.e("RecipeViewModel", "Excepción al subir receta", e)
+                onResult(false)
             }
+            // _isLoading.value = false
         }
     }
 

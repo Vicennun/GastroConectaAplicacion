@@ -269,43 +269,24 @@ fun CreateRecipeScreen(
 
 fun uriToBase64(context: Context, uri: Uri): String? {
     return try {
-        // 1. Primero, leer solo las dimensiones de la imagen (sin cargarla en memoria)
-        val options = BitmapFactory.Options().apply {
-            inJustDecodeBounds = true
-        }
-        context.contentResolver.openInputStream(uri)?.use { input ->
-            BitmapFactory.decodeStream(input, null, options)
-        }
+        val contentResolver = context.contentResolver
+        // Abrir el stream de datos
+        val inputStream = contentResolver.openInputStream(uri) ?: return null
 
-        // 2. Calcular el factor de reducción para que no pase de 800x800 píxeles
-        // (Esto reduce drásticamente el uso de memoria y el tamaño final)
-        var inSampleSize = 1
-        val reqWidth = 800
-        val reqHeight = 800
-        val height = options.outHeight
-        val width = options.outWidth
+        // Decodificar el bitmap
+        val bitmap = BitmapFactory.decodeStream(inputStream)
+        inputStream.close() // Importante cerrar el stream
 
-        if (height > reqHeight || width > reqWidth) {
-            val halfHeight = height / 2
-            val halfWidth = width / 2
-            while ((halfHeight / inSampleSize) >= reqHeight && (halfWidth / inSampleSize) >= reqWidth) {
-                inSampleSize *= 2
-            }
-        }
+        if (bitmap == null) return null
 
-        // 3. Cargar la imagen ya reducida
-        val actualOptions = BitmapFactory.Options().apply {
-            inSampleSize = inSampleSize
-        }
-        val inputStream = context.contentResolver.openInputStream(uri)
-        val bitmap = BitmapFactory.decodeStream(inputStream, null, actualOptions)
-
-        // 4. Comprimir a JPEG y convertir a Base64
         val outputStream = ByteArrayOutputStream()
-        bitmap?.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Calidad 70 es suficiente
+        // Comprimir a JPEG con calidad 50 para reducir tamaño (vital para subir a AWS)
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream)
         val byteArray = outputStream.toByteArray()
 
-        "data:image/jpeg;base64," + Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        val base64String = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+        // Asegurar el prefijo para que el backend/frontend web lo entienda como imagen
+        "data:image/jpeg;base64,$base64String"
     } catch (e: Exception) {
         e.printStackTrace()
         null
