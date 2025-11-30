@@ -47,7 +47,7 @@ dependencies {
     // RETROFIT & GSON (Agregar estas dos)
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
-
+    implementation("androidx.compose.material:material-icons-extended")
     // Viewmodel Compose (Ya deberías tenerlas, pero confirma)
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
     implementation("io.coil-kt:coil-compose:2.4.0")
