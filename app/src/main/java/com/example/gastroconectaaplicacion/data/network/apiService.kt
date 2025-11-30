@@ -4,7 +4,7 @@ import com.example.gastroconectaaplicacion.data.model.Recipe
 import com.example.gastroconectaaplicacion.data.model.User
 import com.example.gastroconectaaplicacion.data.model.LoginRequest
 import com.example.gastroconectaaplicacion.data.model.Comentario
-import com.example.gastroconectaaplicacion.data.model.RecipeRating
+import com.example.gastroconectaaplicacion.data.model.Rating
 import retrofit2.Response
 import retrofit2.http.*
 
@@ -62,6 +62,6 @@ interface ApiService {
     @POST("api/v1/recetas/{id}/rate")
     suspend fun rateRecipe(
         @Path("id") recipeId: Long,
-        @Body rating: RecipeRating
+        @Body rating: Rating
     ): Response<Recipe>
 }
