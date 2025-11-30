@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 
 class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
 
@@ -62,6 +63,11 @@ class RecipeViewModel(private val repository: RecipeRepository) : ViewModel() {
             val updated = repository.rateRecipe(recipeId, rating)
             if (updated != null) updateLocalRecipe(updated)
         }
+    }
+
+    fun getRecipeById(id: Long): kotlinx.coroutines.flow.Flow<Recipe?> {
+        // Observa la lista de recetas y busca la que coincida con el ID
+        return recipes.map { list -> list.find { it.id == id } }
     }
 
     // Helper para actualizar una receta específica en la lista sin recargar todo

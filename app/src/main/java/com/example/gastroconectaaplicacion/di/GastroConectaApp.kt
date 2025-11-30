@@ -1,26 +1,20 @@
-package com.example.gastroconectaaplicacion.di // Asegúrate que el package sea el correcto
+package com.example.gastroconectaaplicacion.di
 
 import android.app.Application
-import com.example.gastroconectaaplicacion.data.AppDatabase // Importa tu AppDatabase
 import com.example.gastroconectaaplicacion.data.repository.RecipeRepository
 import com.example.gastroconectaaplicacion.data.repository.UserRepository
 
-/*
- * Esta SÍ es la clase Application correcta.
- */
 class GastroConectaApp : Application() {
 
-    // Base de datos (lazy init)
-    private val database by lazy {
-        AppDatabase.getDatabase(this)
-    }
+    // ELIMINADO: Ya no iniciamos AppDatabase aquí.
 
-    // Repositorios (lazy init)
+    // Repositorios: Ahora se inician sin parámetros
+    // (porque usan RetrofitClient internamente)
     val userRepository by lazy {
-        UserRepository(database.userDao())
+        UserRepository()
     }
 
     val recipeRepository by lazy {
-        RecipeRepository(database.recipeDao())
+        RecipeRepository()
     }
 }

@@ -17,11 +17,15 @@ import com.example.gastroconectaaplicacion.ui.viewmodel.AuthUiState // Importa e
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Importa la Factory
 
 @Composable
-fun LoginScreen(navController: NavController) {
-    // 1. Obtener la instancia del ViewModel usando nuestra Factory
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(application))
+fun LoginScreen(
+    navController: NavController,
+    viewModel: AuthViewModel // <--- CAMBIO: Recibir como parámetro
+) {
+    // ELIMINAR estas líneas (ya no creamos el VM aquí)
+    // val context = LocalContext.current
+    // val application = context.applicationContext as Application
+    // val viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(application))
+
 
     // 2. Observar el estado de la UI del ViewModel
     val uiState by viewModel.uiState.collectAsState()

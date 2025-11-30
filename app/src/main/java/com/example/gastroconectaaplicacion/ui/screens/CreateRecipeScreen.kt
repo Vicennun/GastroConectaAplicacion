@@ -109,9 +109,17 @@ fun CreateRecipeScreen(
             onClick = {
                 val user = currentUser ?: return@Button
 
-                // Convertir textos a listas
-                val listaIngredientes = ingredientesText.lines().filter { it.isNotBlank() }
-                val listaPasos = pasosText.lines().filter { it.isNotBlank() }
+                // 1. Convertir el texto de ingredientes a Lista de Strings
+                // El backend espera: ["Harina - 1 taza", "Huevos - 2"]
+                val listaIngredientes = ingredientesText.lines()
+                    .filter { it.isNotBlank() }
+                    .map { it.trim() }
+
+                val listaPasos = pasosText.lines()
+                    .filter { it.isNotBlank() }
+                    .map { it.trim() }
+
+                // Usamos la foto Base64 si existe, sino un placeholder
                 val fotoFinal = if (fotoBase64.isNotBlank()) fotoBase64 else "https://via.placeholder.com/300"
 
                 val receta = Recipe(
@@ -119,11 +127,19 @@ fun CreateRecipeScreen(
                     descripcion = descripcion,
                     tiempoPreparacion = tiempo,
                     autorId = user.id,
+
+                    // CORRECCIÓN 1: user.name
                     autorNombre = user.name,
+
+                    // CORRECCIÓN 2: fotoFinal en el campo 'foto'
                     foto = fotoFinal,
+
+                    // CORRECCIÓN 3: Asignar a 'ingredientesSimples'
                     ingredientesSimples = listaIngredientes,
+
                     pasos = listaPasos,
                     etiquetasDieteticas = etiquetasSeleccionadas
+                    // El resto de campos (ratings, comentarios) tienen valores por defecto en el modelo
                 )
 
                 recipeViewModel.addRecipe(receta)

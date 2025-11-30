@@ -17,11 +17,10 @@ import com.example.gastroconectaaplicacion.ui.viewmodel.AuthUiState // Verifica 
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica este import
 
 @Composable
-fun RegisterScreen(navController: NavController) {
-    // Obtener ViewModel
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val viewModel: AuthViewModel = viewModel(factory = ViewModelFactory(application))
+fun RegisterScreen(
+    navController: NavController,
+    viewModel: AuthViewModel // <--- CAMBIO
+) {
 
     // Observar estado
     val uiState by viewModel.uiState.collectAsState()

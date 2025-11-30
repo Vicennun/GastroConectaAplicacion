@@ -28,7 +28,7 @@ fun RecipeCard(
             // Imagen (usando Coil - necesita dependencia)
             AsyncImage(
                 model = ImageRequest.Builder(LocalContext.current)
-                    .data(recipe.fotoUrl)
+                    .data(recipe.foto)
                     .crossfade(true)
                     // .placeholder(R.drawable.placeholder) // Opcional: imagen de carga
                     // .error(R.drawable.error) // Opcional: imagen de error

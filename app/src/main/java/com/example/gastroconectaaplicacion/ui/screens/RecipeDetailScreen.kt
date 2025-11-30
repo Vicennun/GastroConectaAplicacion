@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -26,16 +27,17 @@ import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel // Verif
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica
 
 @Composable
-fun RecipeDetailScreen(navController: NavController, recipeId: Long) {
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val factory = ViewModelFactory(application)
-    val recipeViewModel: RecipeViewModel = viewModel(factory = factory)
-    val authViewModel: AuthViewModel = viewModel(factory = factory) // Para like/save
+fun RecipeDetailScreen(
+    navController: NavController,
+    recipeId: Long,
+    authViewModel: AuthViewModel,    // <--- CAMBIO
+    recipeViewModel: RecipeViewModel // <--- CAMBIO
+) {
+
 
     // --- OBTENER RECETA POR ID ---
     // Observa el Flow que devuelve getRecipeById
-    val recipeState = recipeViewModel.getRecipeById(recipeId).collectAsStateWithLifecycle(initialValue = null)
+    val recipeState = recipeViewModel.getRecipeById(recipeId).collectAsState(initial = null)
     val recipe = recipeState.value // El valor actual del Flow (Recipe? o null)
 
     val currentUser by authViewModel.currentUser.collectAsState()
@@ -71,7 +73,7 @@ fun RecipeDetailScreen(navController: NavController, recipeId: Long) {
                 // Imagen con Coil
                 AsyncImage(
                     model = ImageRequest.Builder(LocalContext.current)
-                        .data(recipe.fotoUrl)
+                        .data(recipe.foto)
                         .crossfade(true)
                         .build(),
                     contentDescription = recipe.titulo,
@@ -140,8 +142,10 @@ fun RecipeDetailScreen(navController: NavController, recipeId: Long) {
 
                 Text("Ingredientes:", style = MaterialTheme.typography.titleMedium)
                 Column { // Para que cada Text ocupe una línea
-                    recipe.ingredientes.forEach { ing ->
-                        Text("- ${ing.cantidad} ${ing.nombre}")
+                    // CORRECCIÓN 2: Iteramos sobre 'ingredientesSimples' (Strings)
+                    // El backend envía strings como "Harina - 1 taza"
+                    recipe.ingredientesSimples.forEach { ingTexto ->
+                        Text("- $ingTexto")
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))

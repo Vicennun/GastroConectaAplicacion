@@ -35,14 +35,16 @@ class AuthViewModel(private val userRepository: UserRepository) : ViewModel() {
     fun register(nombre: String, email: String, pass: String) {
         viewModelScope.launch {
             _uiState.value = AuthUiState.Loading
+            // CORRECCIÓN: Usamos 'name' en lugar de 'nombre'
+            // El id se genera automático en backend (envíamos 0)
             val newUser = User(name = nombre, email = email, password = pass)
+
             val result = userRepository.registerUser(newUser)
             if (result != null) {
-                // Si registra bien, hacemos login automático
                 _currentUser.value = result
                 _uiState.value = AuthUiState.Success
             } else {
-                _uiState.value = AuthUiState.Error("Error al registrar. El email podría estar usado.")
+                _uiState.value = AuthUiState.Error("Error al registrar.")
             }
         }
     }

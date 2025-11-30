@@ -21,12 +21,12 @@ import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Veri
 
 @OptIn(ExperimentalMaterial3Api::class) // Para Scaffold y FAB
 @Composable
-fun HomeScreen(navController: NavController) {
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val viewModel: RecipeViewModel = viewModel(factory = ViewModelFactory(application))
+fun HomeScreen(
+    navController: NavController,
+    viewModel: RecipeViewModel // <--- CAMBIO
+) {
 
-    val recipes by viewModel.allRecipes.collectAsState()
+    val recipes by viewModel.recipes.collectAsState()
 
     Scaffold(
         topBar = {

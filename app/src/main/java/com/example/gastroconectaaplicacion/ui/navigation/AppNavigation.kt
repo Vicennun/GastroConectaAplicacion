@@ -1,53 +1,61 @@
-package com.example.gastroconectaaplicacion.ui.navigation // Verifica paquete
+package com.example.gastroconectaaplicacion.ui.navigation
 
-import androidx.compose.material3.Text // Asegúrate que esté importado
+import android.app.Application
 import androidx.compose.runtime.Composable
-import androidx.navigation.NavType // Necesario para argumentos
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument // Necesario para argumentos
-
-// Importa TODAS tus pantallas
-import com.example.gastroconectaaplicacion.ui.screens.LoginScreen // Verifica import
-import com.example.gastroconectaaplicacion.ui.screens.RegisterScreen // Verifica import
-import com.example.gastroconectaaplicacion.ui.screens.HomeScreen // Verifica import
-import com.example.gastroconectaaplicacion.ui.screens.CreateRecipeScreen // Verifica import
-import com.example.gastroconectaaplicacion.ui.screens.RecipeDetailScreen // Verifica import
-import com.example.gastroconectaaplicacion.ui.screens.ProfileScreen // Verifica import
+import androidx.navigation.navArgument
+import com.example.gastroconectaaplicacion.ui.screens.*
+import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel
+import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel
+import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory
 
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
 
+    // 1. Instanciar ViewModels COMPARTIDOS (Hoisting)
+    val context = LocalContext.current
+    val application = context.applicationContext as Application
+    val factory = ViewModelFactory(application)
+
+    // Estos ViewModels vivirán mientras la app esté abierta
+    val authViewModel: AuthViewModel = viewModel(factory = factory)
+    val recipeViewModel: RecipeViewModel = viewModel(factory = factory)
+
     NavHost(
         navController = navController,
-        startDestination = AppScreens.LoginScreen.route // La app empieza en Login
+        startDestination = AppScreens.LoginScreen.route
     ) {
         composable(route = AppScreens.LoginScreen.route) {
-            LoginScreen(navController)
+            // Pasamos el authViewModel compartido
+            LoginScreen(navController, authViewModel)
         }
         composable(route = AppScreens.RegisterScreen.route) {
-            RegisterScreen(navController)
+            RegisterScreen(navController, authViewModel)
         }
         composable(route = AppScreens.HomeScreen.route) {
-            HomeScreen(navController)
+            // Home necesita ver recetas
+            HomeScreen(navController, recipeViewModel)
         }
         composable(route = AppScreens.CreateRecipeScreen.route) {
-            CreateRecipeScreen(navController)
+            // ¡AQUÍ SE ARREGLA TU ERROR! Pasamos los 3 argumentos
+            CreateRecipeScreen(navController, authViewModel, recipeViewModel)
         }
-        // Ruta para Detalle, extrayendo el ID
         composable(
             route = AppScreens.RecipeDetailScreen.route,
             arguments = listOf(navArgument("recipeId") { type = NavType.LongType })
         ) { backStackEntry ->
-            // Extrae el ID de los argumentos de la ruta
-            val recipeId = backStackEntry.arguments?.getLong("recipeId") ?: 0L // Usa 0L como ID inválido por defecto
-            RecipeDetailScreen(navController, recipeId)
+            val recipeId = backStackEntry.arguments?.getLong("recipeId") ?: 0L
+            // Detalle necesita ambos (para ver receta y para dar like/guardar)
+            RecipeDetailScreen(navController, recipeId, authViewModel, recipeViewModel)
         }
         composable(route = AppScreens.ProfileScreen.route) {
-            ProfileScreen(navController)
+            ProfileScreen(navController, authViewModel)
         }
-        // Puedes añadir más rutas aquí si es necesario
     }
 }

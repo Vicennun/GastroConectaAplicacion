@@ -15,11 +15,10 @@ import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel // Verific
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory // Verifica
 
 @Composable
-fun ProfileScreen(navController: NavController) {
-    val context = LocalContext.current
-    val application = context.applicationContext as Application
-    val factory = ViewModelFactory(application)
-    val authViewModel: AuthViewModel = viewModel(factory = factory)
+fun ProfileScreen(
+    navController: NavController,
+    authViewModel: AuthViewModel // <--- CAMBIO
+) {
 
     val currentUser by authViewModel.currentUser.collectAsState()
 
@@ -42,11 +41,11 @@ fun ProfileScreen(navController: NavController) {
         ) {
             Text("Mi Perfil", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(16.dp))
-            Text("Nombre: ${user.nombre}")
+            Text("Nombre: ${user.name}")
             Text("Email: ${user.email}")
             Spacer(modifier = Modifier.height(32.dp))
 
-            // TODO: Implementar Tabs con Pager (Compose) para:
+            // TODO: Implementar    Tabs con Pager (Compose) para:
             // - Mis Recetas (filtrar recipes por user.id)
             // - Recetas Guardadas (filtrar recipes por user.recetario)
             // - Siguiendo (buscar usuarios por user.siguiendo)
