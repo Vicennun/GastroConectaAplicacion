@@ -1,22 +1,26 @@
-package com.example.gastroconectaaplicacion.ui.components // Verifica
+package com.example.gastroconectaaplicacion.ui.components
 
+import android.graphics.BitmapFactory
+import android.util.Base64
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage // Necesitarás añadir la dependencia de Coil
+import coil.compose.AsyncImage
 import coil.request.ImageRequest
-import com.example.gastroconectaaplicacion.data.model.Recipe // Verifica
+import com.example.gastroconectaaplicacion.data.model.Recipe
 
-@OptIn(ExperimentalMaterial3Api::class) // Para Card
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RecipeCard(
     recipe: Recipe,
-    onClick: () -> Unit // Acción al hacer clic
+    onClick: () -> Unit
 ) {
     Card(
         onClick = onClick,
@@ -25,37 +29,45 @@ fun RecipeCard(
             .padding(vertical = 8.dp)
     ) {
         Column {
-            // Imagen (usando Coil - necesita dependencia)
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(recipe.foto)
-                    .crossfade(true)
-                    // .placeholder(R.drawable.placeholder) // Opcional: imagen de carga
-                    // .error(R.drawable.error) // Opcional: imagen de error
-                    .build(),
-                contentDescription = recipe.titulo,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(180.dp),
-                contentScale = ContentScale.Crop // Escala la imagen para llenar el espacio
-            )
+            // LÓGICA INTELIGENTE DE IMAGEN
+            Box(modifier = Modifier.fillMaxWidth().height(180.dp)) {
+                if (recipe.foto.startsWith("data:image")) {
+                    // CASO 1: Es Base64 (Foto subida desde celular)
+                    val bitmap = remember(recipe.foto) {
+                        try {
+                            val cleanBase64 = recipe.foto.substringAfter(",")
+                            val decodedBytes = Base64.decode(cleanBase64, Base64.DEFAULT)
+                            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                        } catch (e: Exception) { null }
+                    }
 
-            // Contenido de texto
+                    if (bitmap != null) {
+                        Image(
+                            bitmap = bitmap.asImageBitmap(),
+                            contentDescription = recipe.titulo,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                } else {
+                    // CASO 2: Es URL (Foto de internet)
+                    AsyncImage(
+                        model = ImageRequest.Builder(LocalContext.current)
+                            .data(recipe.foto)
+                            .crossfade(true)
+                            .build(),
+                        contentDescription = recipe.titulo,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+            }
+
             Column(Modifier.padding(16.dp)) {
                 Text(recipe.titulo, style = MaterialTheme.typography.titleMedium)
                 Spacer(modifier = Modifier.height(4.dp))
                 Text("Tiempo: ${recipe.tiempoPreparacion}", style = MaterialTheme.typography.bodySmall)
-                // Podrías añadir el nombre del autor aquí si lo buscas
-                // Text("Por: ${authorName}", style = MaterialTheme.typography.bodySmall)
             }
         }
     }
 }
-
-// --- Añade la dependencia de Coil ---
-// 1. Abre gradle/libs.versions.toml
-// 2. En [versions], añade: coil = "2.6.0" (o la última versión)
-// 3. En [libraries], añade: coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
-// 4. Abre app/build.gradle.kts
-// 5. En dependencies, añade: implementation(libs.coil.compose)
-// 6. Sync Gradle

@@ -22,6 +22,7 @@ import com.example.gastroconectaaplicacion.R
 import com.example.gastroconectaaplicacion.ui.viewmodel.AuthViewModel
 import com.example.gastroconectaaplicacion.ui.viewmodel.RecipeViewModel
 import com.example.gastroconectaaplicacion.ui.viewmodel.ViewModelFactory
+import androidx.compose.ui.graphics.asImageBitmap
 
 @Composable
 fun RecipeDetailScreen(
@@ -65,15 +66,35 @@ fun RecipeDetailScreen(
                 Text("Tiempo: ${recipe.tiempoPreparacion}", style = MaterialTheme.typography.bodySmall)
                 Spacer(modifier = Modifier.height(16.dp))
 
-                AsyncImage(
-                    model = ImageRequest.Builder(LocalContext.current)
-                        .data(recipe.foto)
-                        .crossfade(true)
-                        .build(),
-                    contentDescription = recipe.titulo,
-                    modifier = Modifier.fillMaxWidth().height(250.dp),
-                    contentScale = ContentScale.Crop
-                )
+                Box(modifier = Modifier.fillMaxWidth().height(250.dp)) {
+                    if (recipe.foto.startsWith("data:image")) {
+                        val bitmap = remember(recipe.foto) {
+                            try {
+                                val cleanBase64 = recipe.foto.substringAfter(",")
+                                val decodedBytes = android.util.Base64.decode(cleanBase64, android.util.Base64.DEFAULT)
+                                android.graphics.BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+                            } catch (e: Exception) { null }
+                        }
+                        if (bitmap != null) {
+                            androidx.compose.foundation.Image(
+                                bitmap = bitmap.asImageBitmap(),
+                                contentDescription = recipe.titulo,
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Crop
+                            )
+                        }
+                    } else {
+                        AsyncImage(
+                            model = ImageRequest.Builder(LocalContext.current)
+                                .data(recipe.foto)
+                                .crossfade(true)
+                                .build(),
+                            contentDescription = recipe.titulo,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                    }
+                }
                 Spacer(modifier = Modifier.height(16.dp))
 
                 Text(recipe.descripcion)
