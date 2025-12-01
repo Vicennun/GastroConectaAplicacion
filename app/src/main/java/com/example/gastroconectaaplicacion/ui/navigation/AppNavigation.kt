@@ -61,5 +61,12 @@ fun AppNavigation() {
                 recipeViewModel = recipeViewModel // <--- ASEGÚRATE DE AGREGAR ESTO
             )
         }
+        composable(
+            route = AppScreens.PublicProfileScreen.route,
+            arguments = listOf(navArgument("userId") { type = NavType.LongType })
+        ) { backStackEntry ->
+            val userId = backStackEntry.arguments?.getLong("userId") ?: 0L
+            PublicProfileScreen(navController, userId, authViewModel, recipeViewModel)
+        }
     }
 }

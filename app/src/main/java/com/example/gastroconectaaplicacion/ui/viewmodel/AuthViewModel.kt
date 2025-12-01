@@ -74,6 +74,16 @@ class AuthViewModel(
         _uiState.value = AuthUiState.Idle
     }
 
+    private val _publicProfileUser = MutableStateFlow<User?>(null)
+    val publicProfileUser: StateFlow<User?> = _publicProfileUser.asStateFlow()
+
+    fun loadPublicProfile(userId: Long) {
+        viewModelScope.launch {
+            val user = userRepository.getUserById(userId)
+            _publicProfileUser.value = user
+        }
+    }
+
     fun toggleSave(recipeId: Long) {
         val userId = _currentUser.value?.id ?: return
         viewModelScope.launch {
@@ -84,7 +94,7 @@ class AuthViewModel(
 
     fun toggleFollow(targetId: Long) {
         val userId = _currentUser.value?.id ?: return
-        viewModelScope.launch {
+        viewModelScope  .launch {
             val updatedUser = userRepository.toggleFollowUser(userId, targetId)
             if (updatedUser != null) _currentUser.value = updatedUser
         }

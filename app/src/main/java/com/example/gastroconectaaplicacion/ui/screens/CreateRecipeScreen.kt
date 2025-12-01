@@ -193,7 +193,7 @@ fun CreateRecipeScreen(
                     titulo = titulo,
                     descripcion = descripcion,
                     tiempoPreparacion = tiempo,
-                    autorId = user.id,
+                    autorId = user.id!!,
                     autorNombre = user.name,
                     foto = fotoFinal,
                     ingredientesSimples = listaIngredientes,
