@@ -88,6 +88,6 @@ La página web es accesible públicamente.
 ##  Entregables (APK)
 
 * **APK Firmado:** `app-release.apk` (Ubicado en la raíz del repositorio o carpeta de entrega).
-* **Llave de Firma (.jks):** `keystore.jks` (Ubicado en carpeta segura/entrega, credenciales en documento adjunto).
+* **Llave de Firma (.jks):** `upload-keystore.jks` (Ubicado en carpeta segura/entrega, credenciales en documento adjunto).
 
 > **Nota:** La aplicación requiere conexión a internet para funcionar.
