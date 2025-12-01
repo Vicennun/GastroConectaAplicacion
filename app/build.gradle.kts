@@ -21,6 +21,16 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+
+            storeFile = file("C:\\App\\upload-keystore.jks")
+            storePassword = "gastroconecta"
+            keyAlias = "gastroconecta"
+            keyPassword = "gastroconecta"
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -28,6 +38,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            // 2. APLICAMOS LA FIRMA A LA VERSIÓN RELEASE
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
